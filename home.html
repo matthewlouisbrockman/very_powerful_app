@@ -387,12 +387,16 @@ First Steps of Plan:`
                     const save = () =>{
                         localStorage.setItem('apiKey', currentAPIKey)
                         localStorage.setItem('currentOrgId', currentOrgId)
+                        localStorage.setItem('engines', engines)
                     }
                     const load = () =>{
                         currentAPIKey = localStorage.getItem('apiKey')
                         currentOrgId = localStorage.getItem('currentOrgId')
+                        engines = localStorage.getItem('engines').split(',')
                         drawKeyInput(currentAPIKey)
                         drawOrgIdInput(currentOrgId)
+                        setGeneratingDropdown()
+                        setPlanningDropdown()
                     }
                 </script>
             </div>
