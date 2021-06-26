@@ -110,7 +110,11 @@ while (document.body.firstChild) {
                     var myIframe = document.getElementById("resultFrame");
                     var s = document.createElement("script");
                     s.type = "text/javascript";
-                    s.innerHTML = executableJS[executableJS.length - 1]
+                    const clearFrame = `while (document.body.firstChild) {
+  document.body.removeChild(document.body.firstChild);
+}`
+                    s.innerHTML = clearFrame + '\n' + executableJS[executableJS.length - 1]
+
                     myIframe.contentWindow.document.head.appendChild(s);
                 }
                 console.log(executableJS[executableJS.length - 1])
@@ -227,8 +231,37 @@ while (document.body.firstChild) {
 
                     <script>
                         let planSteps = []
+                        let stepIndex = 0
+                        let task = ''
+
+                        const generateCode = async () =>{
+                            const currentCode = executableJS[executableJS.length - 1]
+                            const newPrompt = currentCode.replace('__TASK__', task) + '\n' + planSteps[stepIndex].step + '\n'
+                            console.log(newPrompt)
+                            const output = await queryOpenAI({key: currentAPIKey, org: currentOrgId, engine: generatingEngine, prompt: newPrompt, max_tokens:500, stop:['\n/*'], frequency_penalty: .1})
+                            console.log(output)
+                            const newCode = newPrompt + output
+                            executableJS = [...executableJS, newCode]
+                            fireJS()
+                        }
+
+                        const run = async () =>{
+                            stepIndex += 1
+                            await generateCode()
+                            showSteps()
+                            setCurrentCode()
+                        }
+
+                        const showSteps = () =>{
+                            document.getElementById("plan-steps").innerHTML = planSteps.map(step=>{
+                                return (
+                                    `<p>${step.step}${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''}</p>`
+                                )
+                            }).join('')
+                            }
+
                         const generatePlan = async () => {
-                            const task = document.getElementById("taskTextArea").value
+                            task = document.getElementById("taskTextArea").value
 
                             let stepPrompt = `The first few steps to make a game in JavaScript from scratch.
                             
@@ -285,44 +318,67 @@ Prototype: ${task}
 First Steps of Plan:`
 
                             const output = await queryOpenAI({key: currentAPIKey, org: currentOrgId, engine: planningEngine, prompt: stepPrompt, max_tokens:500, stop:['======', '\nPrototype'], frequency_penalty: .1})
-                            const newSteps = output.split('\n').filter(x=>x.startsWith('/*'))
+                            const newSteps = output.split('\n').filter(x=>x.startsWith('/*')).map((x, index)=>{return {'step':x, 'ran':false, idx: index}})
                             planSteps = newSteps
-                            document.getElementById("plan-steps").innerHTML = newSteps.map(step=>{
-                                return (
-                                    `<p>${step}</p>`
-                                )
-                            }).join('')
+                            showSteps()
+
                         }
+
                     </script>
+                    <button onClick="saveSteps()">Save Steps</button>
+                    <button onClick="loadSteps()">Load Steps</button>
+                    <script>
+                        const saveSteps = () => {
+                            localStorage.setItem('planSteps', JSON.stringify(planSteps))
+                            localStorage.setItem('task', JSON.stringify(task))
+                        }
+                        const loadSteps = () => {
+                            planSteps = localStorage.getItem('planSteps')
+                            planSteps = JSON.parse(planSteps)
+                            task = localStorage.getItem('task')
+                            showSteps()
+                        }
+
+                    </script>
+
                 </div>
 
                 <div>
                     <p>Coding Engine</p>
-                    <select id="generatingDropdown"></select>
+                    <select id="generatingDropdown" onChange="updateGeneratingEngine()"></select>
                 </div>
                     <script>
-                        const setGeneratingDropdown = () =>{
-                            const updateEngine = (newEngine) =>{
-                                currentEngine = newEngine
-                            }
-                            const generatingOptions = engines.map(x=>{
-                                return `<option value=${x}>${x}</option>`
-                            })
-                            myDropDown = document.getElementById("generatingDropdown")
-                            myDropDown.innerHTML = generatingOptions
+
+                    let generatingEngine = engines[0]
+                    const updateGeneratingEngine = () =>{
+                        generatingEngine = document.getElementById("generatingDropdown").value
                         }
+
+                    const setGeneratingDropdown = () =>{
+                        const generatingOptions = engines.map(x=>{
+                            return `<option value=${x}>${x}</option>`
+                        })
+                        myDropDown = document.getElementById("generatingDropdown")
+                        myDropDown.innerHTML = generatingOptions
+                    }
+
+
                     </script>
                     <div>
                         <p>Current JS</p>
-                        <textarea id='codeTextArea'></textarea>
+                        <textarea id='codeTextArea' rows=20 cols=30 onkeyup="manuallyChangeCode()"></textarea>
                         <script>
+                            const manuallyChangeCode = () =>{
+                                console.log('here')
+                                executableJS[executableJS.length-1] = document.getElementById("codeTextArea").value
+                                fireJS()
+                            }
                             const setCurrentCode = () =>{
                                 document.getElementById("codeTextArea").value=executableJS[executableJS.length-1]
                             }
                             setCurrentCode()
                         </script>
                     </div>
-                        
                 </div>
 
                 </div>
