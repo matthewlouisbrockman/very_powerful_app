@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!--style in one place cause just a single page-->
+        <style>
+            .main{
+                height: 100vh;
+                width: 100vw;
+                flex-direction: row;
+                display: flex;
+            }
+            .right{
+                height: 100%;
+                width: 30%;
+                background-color: cadetblue;
+            }
+            .left{
+                height: 100%;
+                width: 70%;
+                background-color: rgb(69, 98, 99);
+            }
+        </style>
+
+        <script>
+            let engines = ['davinci', 'curie']
+            currentEngine=engines[0]
+
+            const getEngines = async({key, org=null}) =>{
+
+                keyHeader = {Authorization: 'Bearer ' + key}
+                orgHeader = org ? {'OpenAI-Organization': org} : null
+
+                const headers = {
+                    ...keyHeader,
+                    ...orgHeader,
+                    'Content-Type': 'application/json'
+                }
+
+                const response = await fetch(`https://api.openai.com/v1/engines`, {
+                method: 'GET',
+                headers,
+                })
+                const result = await response.json()
+                engines = result['data'].map(x=>x.id)
+                setPlanningDropdown()
+                setGeneratingDropdown()
+            }
+
+
+            const queryOpenAI = async({key, org=null, engine=currentEngine, ...props}) =>{
+                const args = {
+                    max_tokens: 5,
+                    prompt: 'Q: 1+1=\nA:',
+                    stop: '\n',
+                    temperature: 0,
+                    ...props
+                }
+
+                keyHeader = {Authorization: 'Bearer ' + key}
+                orgHeader = org ? {'OpenAI-Organization': org} : null
+
+                const headers = {
+                    ...keyHeader,
+                    ...orgHeader,
+                    'Content-Type': 'application/json'
+                }
+
+                console.log(args)
+
+                const response = await fetch(`https://api.openai.com/v1/engines/${engine}/completions`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(args),
+                })
+                const result = await response.json()
+                return result['choices'][0]['text']
+            }
+        </script>
+
+        <script>
+            if (typeof(Storage) !== "undefined") {
+                console.log('w00t local storage')
+            } else {
+            console.log('no local storage')
+            }
+        </script>
+    </head>
+
+    <body>
+        <div class='main'>
+            <div class='left' style="width: 70%; height: 100%">
+                <iframe id="resultFrame" style="width: 80%; height: 90%"></iframe>
+            </div>
+            <script>
+                    let executableJS = [`// Tinkering with steps to make __TASK__
+
+/* Add "Hello World", by adding an HTML DOM node */
+var helloWorld = document.createElement('div');
+helloWorld.innerHTML = 'Hello World';
+document.body.appendChild(helloWorld);
+
+/* Clear the page. */
+while (document.body.firstChild) {
+  document.body.removeChild(document.body.firstChild);
+}
+`]
+
+                const fireJS = () => {
+
+                    var myIframe = document.getElementById("resultFrame");
+                    var s = document.createElement("script");
+                    s.type = "text/javascript";
+                    s.innerHTML = executableJS[executableJS.length - 1]
+                    myIframe.contentWindow.document.head.appendChild(s);
+                }
+                console.log(executableJS[executableJS.length - 1])
+            </script>
+
+            <div class='right' id='right' style="width: 30%; max-height: 100%; overflow-y:scroll;">
+                <div id='api-key'></div>
+                <script>
+                    let showAPIKey = true
+                    let keyArea = document.getElementById('api-key')
+                    let currentAPIKey = ''
+
+                    const updateKey = () =>{
+                        currentAPIKey= document.getElementById('currentKeyArea').value
+                    }
+
+                    const drawKeyInput = (val) =>{
+
+                        if(!showAPIKey){
+                            keyArea.innerHTML='<p style="cursor: pointer;" onClick="updateKeyOpen(true)">+ Update Key</p>'
+                        }
+                        if(showAPIKey){
+                            keyForm = `<div>
+                            <p onClick="updateKeyOpen(false)" style="cursor: pointer;">API Key (hide)</p>
+                            <textArea id='currentKeyArea' onKeyonChange="updateKey()" onKeyUp="updateKey()">${val}</textArea>
+                            </div>`
+                            keyArea.innerHTML=keyForm
+                        }
+                    }
+                    drawKeyInput(currentAPIKey)
+
+                    const updateKeyOpen = (val) =>{
+                        showAPIKey = val
+                        drawKeyInput(currentAPIKey)
+                    }
+
+                </script>
+                <div id='orgId'></div>
+                <script>
+                    let showOrgId = true
+                    let orgIdArea = document.getElementById('orgId')
+                    let currentOrgId = ''
+
+                    const updateOrgId = () =>{
+                        currentOrgId = document.getElementById('currentOrgIdInput').value
+                    }
+
+                    const drawOrgIdInput = (val) =>{
+                        if(!showOrgId){
+                            orgIdArea.innerHTML='<p style="cursor: pointer;" onClick="updateOrgIdOpen(true)">+ Update Org Id</p>'
+                        }
+                        if(showOrgId){
+                            keyForm = `<div>
+                            <p onClick="updateOrgIdOpen(false)" style="cursor: pointer;">Org Id (hide)</p>
+                            <textArea id='currentOrgIdInput' onKeyonChange="updateOrgId()" onKeyUp="updateOrgId()">${val}</textArea>
+                            </div>`
+                            orgIdArea.innerHTML=keyForm
+                        }
+                    }
+                    drawOrgIdInput(currentOrgId)
+
+                    const updateOrgIdOpen = (val) =>{
+                        console.log('currentAPIKey: ', currentAPIKey)
+                        showOrgId = val
+                        drawOrgIdInput(currentOrgId)
+                    }
+
+                </script>
+                <div id='keyButtons' style="display: flex; flex-direction: column;">
+                    <button onClick="loadEngines()">Get Engines</button>
+                    <button onClick="save()">Save Keys</button>
+                    <button onClick="load()">Load Keys</button>
+
+                </div>
+                <script>
+                    const foo = () =>{
+                        console.log('API: ', currentAPIKey)
+                        console.log('ORG: ', currentOrgId)
+                        queryOpenAI({key: currentAPIKey, org: currentOrgId ? currentOrgId : null})
+                    }
+                    const loadEngines = () =>{
+                        console.log('API: ', currentAPIKey)
+                        console.log('ORG: ', currentOrgId)
+                        getEngines({key: currentAPIKey, org: currentOrgId ? currentOrgId : null})
+                    }
+                </script>
+                <div id='generating-model'></div>
+                <div>
+                    <p>Planning Engine</p>
+                    <select id="planningDropdown" onChange="updatePlanningEngine()"></select>
+                </div>
+                <script>
+                    let planningEngine = engines[0]
+                    const updatePlanningEngine = () =>{
+                            planningEngine = document.getElementById("planningDropdown").value
+                            console.log(planningEngine)
+
+                        }
+
+                    const setPlanningDropdown = () =>{
+                        const planningOptions = engines.map(x=>{
+                            return `<option value=${x}>${x}</option>`
+                        })
+                        planningDropdown = document.getElementById("planningDropdown")
+                        planningDropdown.innerHTML = planningOptions
+                    }
+                </script>
+                <div style="display: flex; flex-direction: column;">
+                    <p>Task:</p>
+                    <textarea id="taskTextArea" placeholder="What app to make, e.g. connect four, login form"></textarea>
+                    <button onClick=generatePlan()>Generate Plan</button>
+                    <p style="margin-bottom: 0;">Plan:</p>
+                    <div id='plan-steps'><p>None</p></div>
+
+                    <script>
+                        let planSteps = []
+                        const generatePlan = async () => {
+                            const task = document.getElementById("taskTextArea").value
+
+                            let stepPrompt = `The first few steps to make a game in JavaScript from scratch.
+                            
+Prototype: Racecar Game
+Plan: We'll create a simple racecar game where you drive a racecar around avoiding objects We'll start by making the race car element, then we'll make it so the user can move it around and avoid objects.
+Development Steps:
+- start with the car
+- now that there's a car, we'll put it in a starting location
+- since the car's in place, we'll make it movable
+- now that the car can move, create obstacles to avoid
+Code Blocks:
+/* To represent the car, add a black 100px x 100px square */
+/* Center the race car on the bottom of the screen */
+/* Make it so the race car moves left or right with the arrow keys */
+/* Create a colored box type to represent a tree */
+
+======
+
+Prototype: Spaceship game
+Plan: We'll create a game where you're a spaceship. We'll start by making a spaceship. Then we'll make it so the spaceship moves around.
+Development Steps:
+- start with the ship
+- now that there's a block to represent the ship, we'll make it look like one
+- now that the ship looks nice, we'll stick it on the left
+- now that it's in a starting location, we'll make the game have the ship just moving back and forth for now
+- add a background
+Code Blocks:
+/* To create the ship, add a colored 150px by 150px square */
+/* Crop it circularly. */
+/* Make it be vertically centered; put on the left side of the page. */
+/* Animate the rocketship horizontally, bouncing off the left/right walls. */
+/* Set background to the color of space. */
+
+======
+
+Prototype: Farm Game
+Plan: We'll create a game where you grow crops like you're on a farm. We'll start by making a field element. Then we'll create things to put in the field to grow.
+Development Steps:
+- start with a field
+- now that there's a field, divide the field into plots for the plants
+- now that there's spots, add the ability to make crops in the squares (use a circle)
+- add visuals to the crop
+- make crops grow over time
+Code Blocks:
+/* To create the field, add a 400px x 400px square */
+/* Split the field into a grid of squares. */
+/* Put a random circle inside one of the squares. */
+/* Make the circle green. */
+/* Make the circle start small and grow every few seconds. */
+
+======
+
+Prototype: ${task}
+First Steps of Plan:`
+
+                            const output = await queryOpenAI({key: currentAPIKey, org: currentOrgId, engine: planningEngine, prompt: stepPrompt, max_tokens:500, stop:['======', '\nPrototype'], frequency_penalty: .1})
+                            const newSteps = output.split('\n').filter(x=>x.startsWith('/*'))
+                            planSteps = newSteps
+                            document.getElementById("plan-steps").innerHTML = newSteps.map(step=>{
+                                return (
+                                    `<p>${step}</p>`
+                                )
+                            }).join('')
+                        }
+                    </script>
+                </div>
+
+                <div>
+                    <p>Coding Engine</p>
+                    <select id="generatingDropdown"></select>
+                </div>
+                    <script>
+                        const setGeneratingDropdown = () =>{
+                            const updateEngine = (newEngine) =>{
+                                currentEngine = newEngine
+                            }
+                            const generatingOptions = engines.map(x=>{
+                                return `<option value=${x}>${x}</option>`
+                            })
+                            myDropDown = document.getElementById("generatingDropdown")
+                            myDropDown.innerHTML = generatingOptions
+                        }
+                    </script>
+                    <div>
+                        <p>Current JS</p>
+                        <textarea id='codeTextArea'></textarea>
+                        <script>
+                            const setCurrentCode = () =>{
+                                document.getElementById("codeTextArea").value=executableJS[executableJS.length-1]
+                            }
+                            setCurrentCode()
+                        </script>
+                    </div>
+                        
+                </div>
+
+                </div>
+
+                <script>
+                    const save = () =>{
+                        localStorage.setItem('apiKey', currentAPIKey)
+                        localStorage.setItem('currentOrgId', currentOrgId)
+                    }
+                    const load = () =>{
+                        currentAPIKey = localStorage.getItem('apiKey')
+                        currentOrgId = localStorage.getItem('currentOrgId')
+                        drawKeyInput(currentAPIKey)
+                        drawOrgIdInput(currentOrgId)
+                    }
+                </script>
+            </div>
+        </div>
+        <script>
+        </script>
+            
+    </body>
+</html>
