@@ -214,6 +214,7 @@ while (document.body.firstChild) {
 
                         }
 
+                
                     const setPlanningDropdown = () =>{
                         const planningOptions = engines.map(x=>{
                             return `<option value=${x}>${x}</option>`
@@ -252,13 +253,31 @@ while (document.body.firstChild) {
                             setCurrentCode()
                         }
 
+                        const deleteStep = (idx) =>{
+                            planSteps = planSteps.filter(step => step.idx !== idx)
+                            showSteps()
+                        }
+
+                        const editStep = (idx) => {
+                            planSteps = planSteps.map(x=>{
+                                if (x.idx === idx) x.editing = true
+                                return x
+                            })
+                            showSteps()
+
+                        }
+
+                        const stepDisplay = (step) =>{
+                            const editing = !!step.editing
+                            return `<p>${step.step}${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${editing ?'':`<button onClick="editStep(${step.idx})">Edit</button>` }</p>`
+
+                        }
+
                         const showSteps = () =>{
                             document.getElementById("plan-steps").innerHTML = planSteps.map(step=>{
-                                return (
-                                    `<p>${step.step}${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''}</p>`
-                                )
+                                return stepDisplay(step)
                             }).join('')
-                            }
+                        }
 
                         const generatePlan = async () => {
                             task = document.getElementById("taskTextArea").value
@@ -366,7 +385,7 @@ First Steps of Plan:`
                     </script>
                     <div>
                         <p>Current JS</p>
-                        <textarea id='codeTextArea' rows=20 cols=30 onkeyup="manuallyChangeCode()"></textarea>
+                        <textarea id='codeTextArea' rows=20 cols=60 onkeyup="manuallyChangeCode()"></textarea>
                         <script>
                             const manuallyChangeCode = () =>{
                                 console.log('here')
