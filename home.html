@@ -408,7 +408,22 @@ First Steps of Plan:`
 
                     </script>
                     <div>
-                        <p>Current JS</p>
+                        <div style="display: flex; flex-direction: row; width: 100%">
+                        <script>
+                            const yolo = async() =>{
+                                const currentCode = executableJS[executableJS.length - 1]
+                                const newPrompt = currentCode.replace('__TASK__', task) + '\n/*'
+                                console.log(newPrompt)
+                                const output = await queryOpenAI({key: currentAPIKey, org: currentOrgId, engine: generatingEngine, prompt: newPrompt, max_tokens:500, stop:['\n/*'], frequency_penalty: .1})
+                                console.log(output)
+                                const newCode = newPrompt + ' ' + output
+                                executableJS = [...executableJS, newCode]
+                                fireJS()
+                                setCurrentCode()
+                            }
+                        </script>
+                        <div style="margin-right: 1em;">Current JS</div> <button onClick="yolo()">YOLO More</button>
+                        </div>
                         <textarea id='codeTextArea' rows=20 cols=60 onkeyup="manuallyChangeCode()"></textarea>
                         <script>
                             const manuallyChangeCode = () =>{
