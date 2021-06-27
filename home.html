@@ -359,7 +359,7 @@ First Steps of Plan:`
 
                             const output = await queryOpenAI({key: currentAPIKey, org: currentOrgId, engine: planningEngine, prompt: stepPrompt, max_tokens:500, stop:['======', '\nPrototype'], frequency_penalty: .1})
                             const newSteps = output.split('\n').filter(x=>x.startsWith('/*')).map((x, index)=>{return {'step':x, 'ran':false, idx: index}})
-                            planSteps = newSteps
+                            planSteps = newSteps.length > 0 ? newSteps : [{'step':'query failed, try again or do it manually', 'ran':false, idx: 0}]
                             showSteps()
 
                         }
