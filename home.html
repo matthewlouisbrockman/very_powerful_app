@@ -226,6 +226,7 @@ while (document.body.firstChild) {
                 <div style="display: flex; flex-direction: column;">
                     <p>Task:</p>
                     <textarea id="taskTextArea" placeholder="What app to make, e.g. connect four, login form"></textarea>
+
                     <button onClick=generatePlan()>Generate Plan</button>
                     <p style="margin-bottom: 0;">Plan:</p>
                     <div id='plan-steps'><p>None</p></div>
@@ -234,6 +235,10 @@ while (document.body.firstChild) {
                         let planSteps = []
                         let stepIndex = 0
                         let task = ''
+                        const reloadTaskArea = () =>{
+                            document.getElementById("taskTextArea").value = task.slice(1, -1)
+                        }
+
 
                         const generateCode = async (idx) =>{
                             console.log('index: ', idx)
@@ -380,6 +385,7 @@ First Steps of Plan:`
                             planSteps = JSON.parse(planSteps)
                             task = localStorage.getItem('task')
                             showSteps()
+                            reloadTaskArea()
                         }
 
                     </script>
