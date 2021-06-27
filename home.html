@@ -225,8 +225,10 @@ while (document.body.firstChild) {
                 </script>
                 <div style="display: flex; flex-direction: column;">
                     <p>Task:</p>
-                    <textarea id="taskTextArea" placeholder="What app to make, e.g. connect four, login form"></textarea>
-
+                    <div style="display: flex; flex-direction: row; width:100%">
+                    <div>Make a... </div>
+                    <input type="text" id="taskTextArea" placeholder="e.g. connect four, login form"></input>
+                    </div>
                     <button onClick=generatePlan()>Generate Plan</button>
                     <p style="margin-bottom: 0;">Plan:</p>
                     <div id='plan-steps'><p>None</p></div>
@@ -249,6 +251,13 @@ while (document.body.firstChild) {
                             console.log(newPrompt)
                             const output = await queryOpenAI({key: currentAPIKey, org: currentOrgId, engine: generatingEngine, prompt: newPrompt, max_tokens:500, stop:['\n/*'], frequency_penalty: .1})
                             console.log(output)
+                            planSteps = planSteps.map(stp=>{
+                                if (stp.idx === idx) {
+                                    stp.ran = true
+                                }
+                                return stp
+                            })
+                            console.log(planSteps.slice(0, 2))
                             const newCode = newPrompt + output
                             executableJS = [...executableJS, newCode]
                             fireJS()
@@ -289,8 +298,8 @@ while (document.body.firstChild) {
 
                             const startDisplay = '<div style="background-color: lightgray; border-style:solid; display: flex; flex-direction: column;">'
 
-                            const myDisplay = !editing ? `<p>${step.step}</p><div style="flex-direction: row">${step.idx===stepIndex ? `<button style="background-color: green" onClick="run(${step.idx})">run</button>`: `<button style="background-color: orange" onClick="run(${step.idx})">run</button>`} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</div>`
-                            : `<textarea id=${`stepTextArea${step.idx}`}>${step.step}</textarea><div style="flex-direction: row">${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Save</button>`}</div>`
+                            const myDisplay = !editing ? `<p>${step.step}</p><div style="flex-direction: row"><button style="background-color: orange" onClick="run(${step.idx})">${step.ran ? 're-run' : 'run'}</button> <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</div>`
+                            : `<textarea id=${`stepTextArea${step.idx}`}>${step.step}</textarea><div style="flex-direction: row">${step.idx===stepIndex ? `<button onClick="run()">${step.ran ? 're-run' : 'run'}</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Save</button>`}</div>`
 
                             const endDisplay = '</div>'
 
