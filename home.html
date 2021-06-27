@@ -260,7 +260,16 @@ while (document.body.firstChild) {
 
                         const editStep = (idx) => {
                             planSteps = planSteps.map(x=>{
-                                if (x.idx === idx) x.editing = true
+                                if (x.idx === idx){
+                                    if (x.editing){
+                                        console.log('here')
+                                        x.editing = false
+                                        x.step = document.getElementById(`stepTextArea${idx}`).value
+                                    }
+                                    else{
+                                        x.editing = true
+                                    }
+                                }
                                 return x
                             })
                             showSteps()
@@ -269,8 +278,8 @@ while (document.body.firstChild) {
 
                         const stepDisplay = (step) =>{
                             const editing = !!step.editing
-                            return `<p>${step.step}${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${editing ?'':`<button onClick="editStep(${step.idx})">Edit</button>` }</p>`
-
+                            if (!editing) return `<p>${step.step}${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</p>`
+                            else return `<p><textarea id=${`stepTextArea${step.idx}`}>${step.step}</textarea>${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Save</button>`}</p>`
                         }
 
                         const showSteps = () =>{
