@@ -278,14 +278,26 @@ while (document.body.firstChild) {
 
                         const stepDisplay = (step) =>{
                             const editing = !!step.editing
-                            if (!editing) return `<p>${step.step}${step.idx===stepIndex ? `<button style="background-color: green" onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</p>`
-                            else return `<p><textarea id=${`stepTextArea${step.idx}`}>${step.step}</textarea>${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Save</button>`}</p>`
+
+                            const startDisplay = '<div style="background-color: lightgray; border-style:solid; display: flex; flex-direction: column;">'
+
+                            const myDisplay = !editing ? `<p>${step.step}</p><div style="flex-direction: row">${step.idx===stepIndex ? `<button style="background-color: green" onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</div>`
+                            : `<textarea id=${`stepTextArea${step.idx}`}>${step.step}</textarea><div style="flex-direction: row">${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Save</button>`}</div>`
+
+                            const endDisplay = '</div>'
+
+                            return startDisplay + myDisplay + endDisplay
+                        }
+
+                        const addStep = () =>{
+                            planSteps = [...planSteps, {'step':'New Step', 'ran':false, idx: planSteps[planSteps.length-1].idx + 1}]
+                            showSteps()
                         }
 
                         const showSteps = () =>{
                             document.getElementById("plan-steps").innerHTML = planSteps.map(step=>{
                                 return stepDisplay(step)
-                            }).join('')
+                            }).join('') + '<button onClick="addStep()">Add Step</button>'
                         }
 
                         const generatePlan = async () => {
