@@ -278,7 +278,7 @@ while (document.body.firstChild) {
 
                         const stepDisplay = (step) =>{
                             const editing = !!step.editing
-                            if (!editing) return `<p>${step.step}${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</p>`
+                            if (!editing) return `<p>${step.step}${step.idx===stepIndex ? `<button style="background-color: green" onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Edit</button>`}</p>`
                             else return `<p><textarea id=${`stepTextArea${step.idx}`}>${step.step}</textarea>${step.idx===stepIndex ? `<button onClick="run()">run</button>`: ''} <button onClick='deleteStep(${step.idx})'>Del</button>${`<button onClick="editStep(${step.idx})">Save</button>`}</p>`
                         }
 
